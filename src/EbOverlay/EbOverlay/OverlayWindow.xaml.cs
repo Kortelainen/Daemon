@@ -17,10 +17,17 @@ public partial class OverlayWindow : Window
     private AppNameZone? _appNameZone;
     private ClockZone? _clockZone;
     private MetricsZone? _metricsZone;
+    private SpriteZone? _spriteZone;
     private ForegroundProcessMetrics? _processMetrics;
 
     // Safe inset margins derived from WorkArea — respects taskbar on any edge
     private Thickness _safeArea;
+
+    /// <summary>
+    /// When false the fullscreen detector is bypassed — overlay stays visible over fullscreen apps.
+    /// Toggle from the tray menu for coding/browser workflows where game-compatibility isn't needed.
+    /// </summary>
+    public bool FullscreenHideEnabled { get; set; } = true;
 
     public OverlayWindow()
     {
@@ -35,6 +42,7 @@ public partial class OverlayWindow : Window
         {
             Dispatcher.Invoke(() => _appNameZone?.OnForegroundWindowChanged(hwnd));
             _processMetrics?.OnForegroundWindowChanged(hwnd);
+            _spriteZone?.OnForegroundWindowChanged();
         };
 
         Loaded += OnLoaded;
@@ -58,11 +66,25 @@ public partial class OverlayWindow : Window
 
         _appNameZone    = new AppNameZone(AppNameText);
         _clockZone      = new ClockZone(ClockText);
-        _metricsZone    = new MetricsZone(
-            CpuText, RamText, NetUpText, NetDownText, NetPanel,
-            CpuBar, RamBar, UpSparkline, DownSparkline, Dispatcher);
+        _metricsZone = new MetricsZone(
+            CpuText, GpuText, VramText, RamText, DiskText,
+            NetUpText, NetDownText, NetPanel,
+            CpuBar, GpuBar, VramBar, RamBar,
+            CpuSparkline, GpuSparkline, VramSparkline, RamSparkline,
+            DiskReadSparkline, DiskWriteSparkline,
+            UpSparkline, DownSparkline,
+            Dispatcher);
         _processMetrics = new ForegroundProcessMetrics();
-        _processMetrics.Updated += snap => _metricsZone.OnProcessUpdated(snap);
+        _processMetrics.Updated += snap =>
+        {
+            _metricsZone.OnProcessUpdated(snap);
+            _spriteZone?.OnProcessUpdated(snap);
+        };
+
+        string sheetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Sprites", "spritesheet.png");
+        _spriteZone = new SpriteZone(SpriteImage, Dispatcher, sheetPath);
+        _metricsZone.SystemUpdated   += snap => _spriteZone.OnSystemUpdated(snap);
+        _metricsZone.HardwareUpdated += snap => _spriteZone.OnHardwareUpdated(snap);
 
         _fullscreenTimer.Start();
     }
@@ -109,13 +131,15 @@ public partial class OverlayWindow : Window
         Canvas.SetLeft(ClockText, contentRight - 60);
         Canvas.SetTop(ClockText,  contentTop);
 
-        // Bottom-right: system metrics
-        Canvas.SetLeft(MetricsPanel, contentRight - 200);
-        Canvas.SetTop(MetricsPanel,  contentBottom - 70);
+        // Bottom-right: system metrics — bottom-anchored so it always hugs the taskbar
+        Canvas.SetLeft(MetricsPanel,   contentRight - 220);
+        Canvas.SetTop(MetricsPanel,    double.NaN);
+        Canvas.SetBottom(MetricsPanel, _safeArea.Bottom + pad);
 
-        // Bottom-left: network
-        Canvas.SetLeft(NetPanel, contentLeft);
-        Canvas.SetTop(NetPanel,  contentBottom - 80);
+        // Bottom-left: network — bottom-anchored
+        Canvas.SetLeft(NetPanel,   contentLeft);
+        Canvas.SetTop(NetPanel,    double.NaN);
+        Canvas.SetBottom(NetPanel, _safeArea.Bottom + pad);
 
         // Mid-right: sprite
         Canvas.SetLeft(SpriteImage, contentRight - 96);
@@ -132,6 +156,11 @@ public partial class OverlayWindow : Window
 
     private void OnFullscreenCheck(object? sender, EventArgs e)
     {
+        if (!FullscreenHideEnabled)
+        {
+            Visibility = Visibility.Visible;
+            return;
+        }
         bool fullscreen = _fullscreenDetector.IsForegroundFullscreen();
         Visibility = fullscreen ? Visibility.Hidden : Visibility.Visible;
     }
@@ -141,6 +170,7 @@ public partial class OverlayWindow : Window
         _fullscreenTimer.Stop();
         _windowHook.Dispose();
         _metricsZone?.Dispose();
+        _spriteZone?.Dispose();
         _processMetrics?.Dispose();
         base.OnClosed(e);
     }

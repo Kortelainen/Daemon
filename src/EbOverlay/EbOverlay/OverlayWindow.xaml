@@ -13,11 +13,8 @@
 
     <Window.Resources>
         <DropShadowEffect x:Key="TextShadow"
-                          Color="Black"
-                          BlurRadius="4"
-                          ShadowDepth="1"
-                          Opacity="0.95"
-                          Direction="315" />
+                          Color="Black" BlurRadius="4"
+                          ShadowDepth="1" Opacity="0.95" Direction="315" />
 
         <Style x:Key="OverlayText" TargetType="TextBlock">
             <Setter Property="Foreground"  Value="#66FF99" />
@@ -26,7 +23,6 @@
             <Setter Property="FontWeight"  Value="Bold" />
             <Setter Property="Effect"      Value="{StaticResource TextShadow}" />
         </Style>
-
         <Style x:Key="OverlayTextSmall" TargetType="TextBlock" BasedOn="{StaticResource OverlayText}">
             <Setter Property="FontSize" Value="11" />
         </Style>
@@ -37,63 +33,77 @@
         <!-- [TOP-LEFT] App name -->
         <TextBlock x:Name="AppNameText"
                    Style="{StaticResource OverlayText}"
-                   Opacity="0"
-                   Text="—" />
+                   Opacity="0" Text="—" />
 
         <!-- [TOP-RIGHT] Clock -->
         <TextBlock x:Name="ClockText"
                    Style="{StaticResource OverlayText}"
-                   Opacity="0.6"
-                   Text="00:00" />
+                   Opacity="0.6" Text="00:00" />
 
-        <!-- [BOT-RIGHT] System + process metrics -->
+        <!-- [BOT-RIGHT] All system metrics — each row: label + bar + sparkline -->
         <StackPanel x:Name="MetricsPanel"
                     Orientation="Vertical"
-                    Opacity="0.5"
-                    Width="200">
+                    Opacity="0.55"
+                    Width="220">
 
+            <!-- CPU -->
             <TextBlock x:Name="CpuText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="CPU  --%"
-                       HorizontalAlignment="Right" />
-            <ctrl:MetricBar x:Name="CpuBar"
-                            Height="3"
-                            Margin="0,2,0,6" />
+                       Text="CPU  --%" HorizontalAlignment="Right" />
+            <ctrl:MetricBar x:Name="CpuBar" Height="3" Margin="0,2,0,2" />
+            <ctrl:Sparkline x:Name="CpuSparkline" Height="18" Margin="0,0,0,6" />
 
+            <!-- GPU -->
+            <TextBlock x:Name="GpuText"
+                       Style="{StaticResource OverlayTextSmall}"
+                       Text="GPU  --%" HorizontalAlignment="Right" />
+            <ctrl:MetricBar x:Name="GpuBar" Height="3" Margin="0,2,0,2" />
+            <ctrl:Sparkline x:Name="GpuSparkline" Height="18" Margin="0,0,0,6" />
+
+            <!-- VRAM -->
+            <TextBlock x:Name="VramText"
+                       Style="{StaticResource OverlayTextSmall}"
+                       Text="VRAM  -- | -- GB" HorizontalAlignment="Right" />
+            <ctrl:MetricBar x:Name="VramBar" Height="3" Margin="0,2,0,2" />
+            <ctrl:Sparkline x:Name="VramSparkline" Height="18" Margin="0,0,0,6" />
+
+            <!-- RAM -->
             <TextBlock x:Name="RamText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="RAM  -- | -- GB"
-                       HorizontalAlignment="Right" />
-            <ctrl:MetricBar x:Name="RamBar"
-                            Height="3"
-                            Margin="0,2,0,0" />
+                       Text="RAM  -- | -- GB" HorizontalAlignment="Right" />
+            <ctrl:MetricBar x:Name="RamBar" Height="3" Margin="0,2,0,2" />
+            <ctrl:Sparkline x:Name="RamSparkline" Height="18" Margin="0,0,0,6" />
+
+            <!-- DISK -->
+            <TextBlock x:Name="DiskText"
+                       Style="{StaticResource OverlayTextSmall}"
+                       Text="DISK  ↑-- ↓--" HorizontalAlignment="Right" />
+            <ctrl:Sparkline x:Name="DiskReadSparkline"  Height="18" Margin="0,2,0,2" />
+            <ctrl:Sparkline x:Name="DiskWriteSparkline" Height="18" Margin="0,0,0,0" />
+
         </StackPanel>
 
-        <!-- [BOT-LEFT] Network metrics + sparklines -->
+        <!-- [BOT-LEFT] Network -->
         <StackPanel x:Name="NetPanel"
                     Orientation="Vertical"
-                    Opacity="0.5"
+                    Opacity="0.55"
                     Width="140">
 
             <TextBlock x:Name="NetUpText"
                        Style="{StaticResource OverlayTextSmall}"
                        Text="↑  --" />
-            <ctrl:Sparkline x:Name="UpSparkline"
-                            Height="20"
-                            Margin="0,2,0,4" />
+            <ctrl:Sparkline x:Name="UpSparkline" Height="20" Margin="0,2,0,4" />
 
             <TextBlock x:Name="NetDownText"
                        Style="{StaticResource OverlayTextSmall}"
                        Text="↓  --" />
-            <ctrl:Sparkline x:Name="DownSparkline"
-                            Height="20"
-                            Margin="0,2,0,0" />
+            <ctrl:Sparkline x:Name="DownSparkline" Height="20" Margin="0,2,0,0" />
+
         </StackPanel>
 
         <!-- [MID-RIGHT] Sprite zone -->
         <Image x:Name="SpriteImage"
-               Width="96"
-               Height="96"
+               Width="96" Height="96"
                RenderOptions.BitmapScalingMode="NearestNeighbor"
                Opacity="0.85" />
 

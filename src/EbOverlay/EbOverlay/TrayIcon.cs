@@ -44,9 +44,18 @@ public sealed class TrayIcon : IDisposable
         var pauseItem = new ToolStripMenuItem("Pause overlay");
         pauseItem.Click += (_, _) => TogglePause();
 
+        var fullscreenItem = new ToolStripMenuItem("Hide on fullscreen")
+        {
+            CheckOnClick = true,
+            Checked      = _overlay.FullscreenHideEnabled,
+        };
+        fullscreenItem.CheckedChanged += (_, _) =>
+            _overlay.FullscreenHideEnabled = fullscreenItem.Checked;
+
         menu.Opening += (_, _) =>
         {
-            pauseItem.Text = _paused ? "Resume overlay" : "Pause overlay";
+            pauseItem.Text          = _paused ? "Resume overlay" : "Pause overlay";
+            fullscreenItem.Checked  = _overlay.FullscreenHideEnabled;
         };
 
         var separator = new ToolStripSeparator();
@@ -61,6 +70,7 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add(header);
         menu.Items.Add(separator);
         menu.Items.Add(pauseItem);
+        menu.Items.Add(fullscreenItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(exitItem);
 

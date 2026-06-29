@@ -47,13 +47,26 @@ All zones are sparse — anchored at screen edges, not filled.
 - Optional glitch frame on minute rollover
 
 ### 3. System Metrics (bottom-right)
-- CPU % and RAM used/total
-- Animated bar fill, polled every 2s via `PerformanceCounter`
+Each metric renders a label line + two-tone bar + sparkline. All metrics are visible by default; M8 config will allow hiding individual rows.
+
+| Metric | Source | Notes |
+|--------|--------|-------|
+| CPU % | `PerformanceCounter` | App % \| system %, red when > 70% |
+| CPU temp | LibreHardwareMonitor | Shown inline with CPU label. Requires admin on some systems |
+| GPU % | LibreHardwareMonitor | — when GPU unavailable |
+| GPU temp | LibreHardwareMonitor | Shown inline with GPU label |
+| VRAM | LibreHardwareMonitor | Used \| total GB |
+| RAM | `GlobalMemoryStatusEx` | App MB \| used GB \| total GB, grouped by process name |
+| Disk | `PerformanceCounter` | Read ↑ / write ↓ KB/s or MB/s, dual sparklines |
+
+**App-level metrics** (CPU, RAM) group all processes sharing the same name — correctly accounts for multi-process apps like browsers and Electron apps.
+
+**LibreHardwareMonitor** (`LibreHardwareMonitorLib`, MPL-2.0) is used for hardware sensor access. Sensors silently report `—` when unavailable rather than crashing.
 
 ### 4. Network Metrics (bottom-left)
-- Upload ↑ / Download ↓ in KB/s or MB/s
-- Hides when idle, appears when traffic detected
-- Polled via `NetworkInterface.GetAllNetworkInterfaces()`
+- Upload ↑ / Download ↓ in KB/s or MB/s, each with a scrolling sparkline
+- Panel dims to near-invisible when idle (< 1 KB/s), brightens on traffic
+- Polled via `NetworkInterface.GetAllNetworkInterfaces()` — all active non-loopback NICs summed
 
 ### 5. Sprite / Character Zone (mid-right)
 - Hand-drawn sprite sheet (provided separately)
@@ -204,6 +217,7 @@ While ALT is held, a minimal dim panel fades in showing:
 - **UI**: WPF
 - **Rendering**: `WriteableBitmap` for sprites, WPF canvas for text/bars
 - **System hooks**: Win32 `SetWinEventHook`, `PerformanceCounter`, `NetworkInterface`
+- **Hardware sensors**: [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0) — CPU/GPU temps, VRAM, GPU load
 - **Transparency**: `WS_EX_LAYERED` + `WS_EX_TRANSPARENT` (click-through)
 
 ---
@@ -248,7 +262,7 @@ EbOverlay/
 | M1 | Transparent click-through window, always on top, hides on fullscreen | ✅ Done |
 | M2 | App name hook + clock rendering | ✅ Done |
 | M3 | System + network metrics live | ✅ Done |
-| M4 | Sprite zone with idle animation | ⬜ |
+| M4 | Sprite zone with idle animation | ✅ |
 | M5 | Behavioral states wired to triggers | ⬜ |
 | M6 | Scanline layer + config file | ⬜ |
 | M7 | Window-aware sprite — floats around active window edges, clips at border | ⬜ |

@@ -1,246 +1,182 @@
 using System.Runtime.InteropServices;
 using System.Windows.Media;
-using Image = System.Windows.Controls.Image;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using EbOverlay.Services;
+using Image = System.Windows.Controls.Image;
 
 namespace EbOverlay.Zones;
 
-// ── State definitions ────────────────────────────────────────────────────────
+// ── Animation config — one row per state, order matches spritesheet rows ──────
 
-public enum SpriteState
+file record AnimConfig(
+    SpriteState State,
+    int         Row,
+    int         Frames,
+    int         Fps,
+    bool        OneShot);   // true = plays once, then falls back to best continuous state
+
+file static class AnimConfigs
 {
-    Sleep, Idle, IdleCurious, WakeUp,
-    WindowSwitch, WindowOpen, WindowClose,
-    Smile, Stare,
-    CpuHigh, CpuHighApp,
-    HeatWarn, HeatCritical
+    public static readonly IReadOnlyDictionary<SpriteState, AnimConfig> All =
+        new AnimConfig[]
+        {
+            new(SpriteState.Sleep,         0,  8,  4, false),
+            new(SpriteState.Idle,          1,  8,  6, false),
+            new(SpriteState.IdleCurious,   2,  6,  6, false),
+            new(SpriteState.WakeUp,        3,  6, 10, true),
+            new(SpriteState.WindowSwitch,  4,  5,  8, true),
+            new(SpriteState.WindowOpen,    5,  5,  8, true),
+            new(SpriteState.WindowClose,   6,  5,  8, true),
+            new(SpriteState.Smile,         7,  6,  8, true),
+            new(SpriteState.Stare,         8,  4,  4, false),
+            new(SpriteState.CpuHigh,       9,  8, 10, false),
+            new(SpriteState.CpuHighApp,   10,  6, 10, false),
+            new(SpriteState.HeatWarn,     11,  8,  8, false),
+            new(SpriteState.HeatCritical, 12,  8, 12, false),
+        }.ToDictionary(c => c.State);
 }
 
+// ── SpriteZone ────────────────────────────────────────────────────────────────
+
 /// <summary>
-/// Drives the sprite Image control: loads the sheet, manages the state machine,
-/// steps frames, and reacts to system triggers.
+/// Drives the sprite Image control.
+/// Decision logic lives in SpriteRules; this class only manages animation
+/// mechanics and routes external triggers through the priority gate.
 /// </summary>
 public sealed class SpriteZone : IDisposable
 {
-    // ── Config table — row order must match spritesheet.png ──────────────────
-    private record StateConfig(
-        SpriteState State,
-        int         Row,
-        int         Frames,
-        int         Fps,
-        bool        OneShot,   // returns to ReturnState when animation completes
-        int         Priority); // higher wins; equal priority = most recent wins
+    // ── Live sensor snapshot (updated from service callbacks) ─────────────────
+    private float  _sysCpu;
+    private float  _appCpu;
+    private float  _maxTemp = -1;
 
-    private static readonly StateConfig[] Configs =
-    [
-        new(SpriteState.Sleep,        0,  8,  4, false, 0),
-        new(SpriteState.Idle,         1,  8,  6, false, 1),
-        new(SpriteState.IdleCurious,  2,  6,  6, false, 1),
-        new(SpriteState.WakeUp,       3,  6, 10, true,  2),
-        new(SpriteState.WindowSwitch, 4,  5,  8, true,  3),
-        new(SpriteState.WindowOpen,   5,  5,  8, true,  3),
-        new(SpriteState.WindowClose,  6,  5,  8, true,  3),
-        new(SpriteState.Smile,        7,  6,  8, true,  4),
-        new(SpriteState.Stare,        8,  4,  4, false, 4),
-        new(SpriteState.CpuHigh,      9,  8, 10, false, 5),
-        new(SpriteState.CpuHighApp,  10,  6, 10, false, 5),
-        new(SpriteState.HeatWarn,    11,  8,  8, false, 6),
-        new(SpriteState.HeatCritical,12,  8, 12, false, 7),
-    ];
-
-    private static readonly Dictionary<SpriteState, StateConfig> ConfigMap =
-        Configs.ToDictionary(c => c.State);
-
-    // ── Thresholds ───────────────────────────────────────────────────────────
-    private const float CpuHighThreshold    = 70f;
-    private const float AppCpuHighThreshold = 50f;
-    private const float HeatWarnThreshold   = 75f;
-    private const float HeatCritThreshold   = 90f;
-    private const int   IdleCuriousSeconds  = 120;
-    private const int   SleepSeconds        = 600;
-    private const int   StareSeconds        = 30;
-    private const float SmileChancePerSec   = 0.02f;
-
-    // ── State ────────────────────────────────────────────────────────────────
-    private SpriteState _current     = SpriteState.Idle;
-    private SpriteState _returnState = SpriteState.Idle;
-    private int         _frame;
-
-    // Live sensor values
-    private float _sysCpu;
-    private float _appCpu;
-    private float _temp = -1;
-
-    // Idle / sleep tracking
-    private DateTime _lastInputTime  = DateTime.UtcNow;
+    // ── Input tracking ────────────────────────────────────────────────────────
+    private DateTime           _lastInputAt     = DateTime.UtcNow;
+    private DateTime           _mouseStillSince = DateTime.UtcNow;
     private System.Windows.Point _lastMousePos;
-    private DateTime _mouseStillSince = DateTime.UtcNow;
-    private bool     _wasSleeping;
+    private bool               _wasSleeping;
 
-    private readonly Random _rng = new();
+    // ── Animation state ───────────────────────────────────────────────────────
+    private SpriteState        _current = SpriteState.Idle;
+    private int                _frame;
 
-    // ── WPF ─────────────────────────────────────────────────────────────────
+    private readonly Random          _rng  = new();
     private readonly Image           _target;
-    private readonly Dispatcher      _dispatcher;
     private readonly DispatcherTimer _animTimer;
-    private readonly DispatcherTimer _stateTimer;
-    private readonly CroppedBitmap[][] _frames;  // [row][frame]
+    private readonly DispatcherTimer _stateTick;
+    private readonly CroppedBitmap[][] _frames;   // [row][frame], pre-cropped at startup
 
-    // ── Constructor ──────────────────────────────────────────────────────────
+    // ── Construction ──────────────────────────────────────────────────────────
+
     public SpriteZone(Image target, Dispatcher dispatcher, string sheetPath)
     {
-        _target     = target;
-        _dispatcher = dispatcher;
-
+        _target = target;
         _frames = LoadSheet(sheetPath);
 
         _animTimer = new DispatcherTimer();
         _animTimer.Tick += OnAnimTick;
 
-        _stateTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _stateTimer.Tick += OnStateTick;
-        _stateTimer.Start();
+        _stateTick = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _stateTick.Tick += (_, _) => dispatcher.Invoke(OnStateTick);
+        _stateTick.Start();
 
         ApplyState(SpriteState.Idle);
     }
 
-    // ── Public triggers ──────────────────────────────────────────────────────
+    // ── External triggers (called from OverlayWindow) ─────────────────────────
 
     public void OnSystemUpdated(SystemSnapshot snap)
     {
         _sysCpu = snap.CpuPercent;
-        EvaluateContinuousStates();
     }
 
     public void OnHardwareUpdated(HardwareSnapshot snap)
     {
-        if (snap.HasCpuTemp) _temp = snap.CpuTempC;
-        if (snap.HasGpuTemp) _temp = Math.Max(_temp, snap.GpuTempC);
-        EvaluateContinuousStates();
+        float t = -1f;
+        if (snap.HasCpuTemp) t = Math.Max(t, snap.CpuTempC);
+        if (snap.HasGpuTemp) t = Math.Max(t, snap.GpuTempC);
+        _maxTemp = t;
     }
 
     public void OnProcessUpdated(ProcessSnapshot? snap)
     {
         _appCpu = snap?.CpuPercent ?? 0f;
-        EvaluateContinuousStates();
     }
 
-    public void OnForegroundWindowChanged() =>
-        TriggerOneShot(SpriteState.WindowSwitch);
+    public void OnForegroundWindowChanged() => TryOneShot(SpriteState.WindowSwitch);
+    public void OnWindowOpened()            => TryOneShot(SpriteState.WindowOpen);
+    public void OnWindowClosed()            => TryOneShot(SpriteState.WindowClose);
 
-    public void OnWindowOpened() =>
-        TriggerOneShot(SpriteState.WindowOpen);
+    // ── Periodic evaluation ───────────────────────────────────────────────────
 
-    public void OnWindowClosed() =>
-        TriggerOneShot(SpriteState.WindowClose);
-
-    // ── State machine ────────────────────────────────────────────────────────
-
-    private void EvaluateContinuousStates()
+    private void OnStateTick()
     {
-        // Highest-priority continuous state that currently applies
-        SpriteState target;
+        RefreshIdleTime();
+        CheckWakeUp();
 
-        if (_temp >= HeatCritThreshold)
-            target = SpriteState.HeatCritical;
-        else if (_temp >= HeatWarnThreshold)
-            target = SpriteState.HeatWarn;
-        else if (_sysCpu >= CpuHighThreshold)
-            target = SpriteState.CpuHigh;
-        else if (_appCpu >= AppCpuHighThreshold)
-            target = SpriteState.CpuHighApp;
-        else
-            return; // no override — let state timer and one-shots manage
+        double idle       = (DateTime.UtcNow - _lastInputAt).TotalSeconds;
+        double mouseStill = GetMouseStillSeconds();
 
-        TryTransition(target);
+        var ctx    = new SpriteContext(_sysCpu, _appCpu, _maxTemp, idle, mouseStill);
+        var winner = SpriteRules.Continuous.FirstOrDefault(r => r.When(ctx));
+        if (winner is null) return;
+
+        // For one-shot states already playing, only interrupt with continuous rules
+        // if the current animation has finished (handled in OnAnimTick).
+        // For looping states, transition freely.
+        var activeCfg = AnimConfigs.All[_current];
+        if (!activeCfg.OneShot)
+            TryContinuousTransition(winner.Target);
+
+        // Random smile — only fires from idle, as a one-shot
+        if (_current == SpriteState.Idle && _rng.NextDouble() < SpriteRules.SmileChancePerTick)
+            TryOneShot(SpriteState.Smile);
     }
 
-    private void OnStateTick(object? sender, EventArgs e)
+    // ── State transition helpers ──────────────────────────────────────────────
+
+    /// <summary>
+    /// Apply a continuous (looping) state. Lower priority cannot override a higher-priority
+    /// alert state, preventing stress animations from being cut by ambient ones.
+    /// </summary>
+    private void TryContinuousTransition(SpriteState next)
     {
-        UpdateIdleTime();
+        if (next == _current) return;
 
-        double idleSecs = (DateTime.UtcNow - _lastInputTime).TotalSeconds;
+        int currentPri = SpriteRules.Priority[_current];
+        int nextPri    = SpriteRules.Priority[next];
 
-        // Sleep / wake
-        if (idleSecs >= SleepSeconds)
-        {
-            _wasSleeping = true;
-            TryTransition(SpriteState.Sleep);
+        // A lower-priority continuous state cannot interrupt an active alert
+        if (nextPri < currentPri && currentPri >= SpriteRules.AlertFloor)
             return;
-        }
 
-        if (_wasSleeping && idleSecs < 5)
-        {
-            _wasSleeping = false;
-            TriggerOneShot(SpriteState.WakeUp);
-            return;
-        }
-
-        // Only manage lower-priority ambient states if nothing urgent is active
-        var cfg = ConfigMap[_current];
-        if (cfg.Priority >= 5) return;
-
-        if (idleSecs >= IdleCuriousSeconds)
-        {
-            TryTransition(SpriteState.IdleCurious);
-            return;
-        }
-
-        // Mouse-still stare
-        var mouse = System.Windows.Forms.Cursor.Position;
-        var pos   = new System.Windows.Point(mouse.X, mouse.Y);
-        if (pos == _lastMousePos)
-        {
-            if ((DateTime.UtcNow - _mouseStillSince).TotalSeconds >= StareSeconds)
-                TryTransition(SpriteState.Stare);
-        }
-        else
-        {
-            _lastMousePos    = pos;
-            _mouseStillSince = DateTime.UtcNow;
-            if (_current == SpriteState.Stare)
-                TryTransition(SpriteState.Idle);
-        }
-
-        // Random smile while idle
-        if (_current == SpriteState.Idle && _rng.NextDouble() < SmileChancePerSec)
-            TriggerOneShot(SpriteState.Smile);
+        ApplyState(next);
     }
 
-    private void TriggerOneShot(SpriteState state)
+    /// <summary>
+    /// Fire a one-shot state (event-driven: window switch, smile, wake-up).
+    /// Blocked when the active state is a high-priority alert.
+    /// </summary>
+    private void TryOneShot(SpriteState oneShot)
     {
-        var incoming = ConfigMap[state];
-        var active   = ConfigMap[_current];
+        int currentPri = SpriteRules.Priority[_current];
+        int triggerPri = SpriteRules.Priority[oneShot];
 
-        // One-shots only interrupt if priority ≥ current, and current isn't a higher alert
-        if (incoming.Priority < active.Priority && active.Priority >= 5)
+        if (triggerPri < currentPri && currentPri >= SpriteRules.AlertFloor)
             return;
 
-        _returnState = active.OneShot ? _returnState : _current;
-        _dispatcher.Invoke(() => ApplyState(state));
+        ApplyState(oneShot);
     }
 
-    private void TryTransition(SpriteState state)
-    {
-        if (state == _current) return;
-
-        var incoming = ConfigMap[state];
-        var active   = ConfigMap[_current];
-
-        if (incoming.Priority < active.Priority && active.Priority >= 5)
-            return;
-
-        _dispatcher.Invoke(() => ApplyState(state));
-    }
+    // ── Animation mechanics ───────────────────────────────────────────────────
 
     private void ApplyState(SpriteState state)
     {
         _current = state;
         _frame   = 0;
 
-        var cfg = ConfigMap[state];
+        var cfg = AnimConfigs.All[state];
         _animTimer.Stop();
         _animTimer.Interval = TimeSpan.FromMilliseconds(1000.0 / cfg.Fps);
         _animTimer.Start();
@@ -250,16 +186,15 @@ public sealed class SpriteZone : IDisposable
 
     private void OnAnimTick(object? sender, EventArgs e)
     {
-        var cfg = ConfigMap[_current];
+        var cfg = AnimConfigs.All[_current];
         _frame++;
 
         if (_frame >= cfg.Frames)
         {
             if (cfg.OneShot)
             {
-                // One-shot complete — return to idle or previous state
-                var next = ConfigMap.ContainsKey(_returnState) ? _returnState : SpriteState.Idle;
-                ApplyState(next);
+                // One-shot finished — re-evaluate rules to find natural current state
+                FallBackToContinuousState();
                 return;
             }
             _frame = 0;
@@ -268,22 +203,68 @@ public sealed class SpriteZone : IDisposable
         ShowFrame(cfg.Row, _frame);
     }
 
-    private void ShowFrame(int row, int frame)
+    private void FallBackToContinuousState()
     {
-        if (row >= _frames.Length || frame >= _frames[row].Length)
-            return;
-        _target.Source = _frames[row][frame];
+        double idle       = (DateTime.UtcNow - _lastInputAt).TotalSeconds;
+        double mouseStill = GetMouseStillSeconds();
+        var ctx    = new SpriteContext(_sysCpu, _appCpu, _maxTemp, idle, mouseStill);
+        var winner = SpriteRules.Continuous.FirstOrDefault(r => r.When(ctx));
+        ApplyState(winner?.Target ?? SpriteState.Idle);
     }
 
-    // ── Sprite sheet loader ──────────────────────────────────────────────────
+    private void ShowFrame(int row, int frame)
+    {
+        if (row < _frames.Length && frame < _frames[row].Length)
+            _target.Source = _frames[row][frame];
+    }
+
+    // ── Input / idle helpers ──────────────────────────────────────────────────
+
+    private void RefreshIdleTime()
+    {
+        var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
+        if (GetLastInputInfo(ref info))
+        {
+            uint idleMs = (uint)Environment.TickCount - info.dwTime;
+            if (idleMs < 2000)
+                _lastInputAt = DateTime.UtcNow;
+        }
+    }
+
+    private void CheckWakeUp()
+    {
+        bool sleeping = (DateTime.UtcNow - _lastInputAt).TotalSeconds >= SpriteRules.SleepIdleSeconds;
+        if (_wasSleeping && !sleeping)
+        {
+            _wasSleeping = false;
+            TryOneShot(SpriteState.WakeUp);
+        }
+        _wasSleeping = sleeping;
+    }
+
+    private double GetMouseStillSeconds()
+    {
+        var raw = System.Windows.Forms.Cursor.Position;
+        var pos = new System.Windows.Point(raw.X, raw.Y);
+
+        if (pos != _lastMousePos)
+        {
+            _lastMousePos    = pos;
+            _mouseStillSince = DateTime.UtcNow;
+        }
+
+        return (DateTime.UtcNow - _mouseStillSince).TotalSeconds;
+    }
+
+    // ── Sprite sheet loader ───────────────────────────────────────────────────
 
     private static CroppedBitmap[][] LoadSheet(string path)
     {
         var src = new BitmapImage();
         src.BeginInit();
-        src.UriSource        = new Uri(path, UriKind.Absolute);
-        src.CacheOption      = BitmapCacheOption.OnLoad;
-        src.CreateOptions    = BitmapCreateOptions.None;
+        src.UriSource     = new Uri(path, UriKind.Absolute);
+        src.CacheOption   = BitmapCacheOption.OnLoad;
+        src.CreateOptions = BitmapCreateOptions.None;
         src.EndInit();
         src.Freeze();
 
@@ -306,18 +287,7 @@ public sealed class SpriteZone : IDisposable
         return sheet;
     }
 
-    // ── Idle time via Win32 ──────────────────────────────────────────────────
-
-    private void UpdateIdleTime()
-    {
-        var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
-        if (GetLastInputInfo(ref info))
-        {
-            uint idleMs = (uint)Environment.TickCount - info.dwTime;
-            if (idleMs < 5000) // input happened recently
-                _lastInputTime = DateTime.UtcNow;
-        }
-    }
+    // ── Win32 ─────────────────────────────────────────────────────────────────
 
     [DllImport("user32.dll")]
     private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
@@ -332,6 +302,6 @@ public sealed class SpriteZone : IDisposable
     public void Dispose()
     {
         _animTimer.Stop();
-        _stateTimer.Stop();
+        _stateTick.Stop();
     }
 }

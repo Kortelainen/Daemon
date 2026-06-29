@@ -16,7 +16,8 @@ public class AppNameZone
     private readonly TextBlock _label;
     private readonly DispatcherTimer _holdTimer;
 
-    private static readonly Duration FadeDuration = new(TimeSpan.FromMilliseconds(300));
+    private static readonly Duration FadeInDuration  = new(TimeSpan.FromMilliseconds(300));
+    private static readonly Duration FadeOutDuration = new(TimeSpan.FromMilliseconds(1200));
     private const double HoldSeconds = 4;
 
     public AppNameZone(TextBlock label)
@@ -46,7 +47,8 @@ public class AppNameZone
 
     private void FadeTo(double opacity)
     {
-        var anim = new DoubleAnimation(opacity, FadeDuration)
+        var duration = opacity > 0 ? FadeInDuration : FadeOutDuration;
+        var anim = new DoubleAnimation(opacity, duration)
         {
             EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
         };

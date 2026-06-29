@@ -1,31 +1,31 @@
 === LHM Sensor Dump ===
 [Cpu] AMD Ryzen AI 9 HX PRO 370 w/ Radeon 890M
-  Load             | CPU Core #1                    | 27,78
-  Load             | CPU Core #2                    | 5,56
-  Load             | CPU Core #3                    | 16,67
-  Load             | CPU Core #4                    | 44,44
-  Load             | CPU Core #5                    | 27,78
-  Load             | CPU Core #6                    | 44,44
-  Load             | CPU Core #7                    | 16,67
-  Load             | CPU Core #8                    | 22,22
-  Load             | CPU Core #9                    | 0,00
-  Load             | CPU Core #10                   | 0,00
-  Load             | CPU Core #11                   | 0,00
-  Load             | CPU Core #12                   | 0,00
-  Load             | CPU Core #13                   | 44,44
-  Load             | CPU Core #14                   | 27,78
-  Load             | CPU Core #15                   | 5,56
+  Load             | CPU Core #1                    | 35,71
+  Load             | CPU Core #2                    | 42,86
+  Load             | CPU Core #3                    | 50,00
+  Load             | CPU Core #4                    | 42,86
+  Load             | CPU Core #5                    | 64,29
+  Load             | CPU Core #6                    | 64,29
+  Load             | CPU Core #7                    | 42,86
+  Load             | CPU Core #8                    | 64,29
+  Load             | CPU Core #9                    | 40,00
+  Load             | CPU Core #10                   | 21,43
+  Load             | CPU Core #11                   | 20,00
+  Load             | CPU Core #12                   | 7,14
+  Load             | CPU Core #13                   | 14,29
+  Load             | CPU Core #14                   | 6,67
+  Load             | CPU Core #15                   | 20,00
   Load             | CPU Core #16                   | 0,00
-  Load             | CPU Core #17                   | 0,00
+  Load             | CPU Core #17                   | 14,29
   Load             | CPU Core #18                   | 0,00
-  Load             | CPU Core #19                   | 0,00
-  Load             | CPU Core #20                   | 5,56
-  Load             | CPU Core #21                   | 0,00
+  Load             | CPU Core #19                   | 6,67
+  Load             | CPU Core #20                   | 0,00
+  Load             | CPU Core #21                   | 6,67
   Load             | CPU Core #22                   | 0,00
-  Load             | CPU Core #23                   | 0,00
-  Load             | CPU Core #24                   | 0,00
-  Load             | CPU Total                      | 12,04
-  Load             | CPU Core Max                   | 44,44
+  Load             | CPU Core #23                   | 50,00
+  Load             | CPU Core #24                   | 71,43
+  Load             | CPU Total                      | 28,57
+  Load             | CPU Core Max                   | 71,43
   Power            | Package                        | 0,00
   Clock            | Cores (Average)                | 0,00
   Clock            | Cores (Average Effective)      | 0,00
@@ -96,24 +96,24 @@
   SmallData        | GPU Memory Total               | 4096,00
   Factor           | Fullscreen FPS                 | 0,00
   SmallData        | D3D Dedicated Memory Total     | 4096,00
-  SmallData        | D3D Dedicated Memory Free      | 1608,68
-  SmallData        | D3D Dedicated Memory Used      | 2487,32
-  SmallData        | D3D Shared Memory Used         | 572,87
-  SmallData        | D3D Shared Memory Free         | 29965,46
+  SmallData        | D3D Dedicated Memory Free      | 1811,90
+  SmallData        | D3D Dedicated Memory Used      | 2284,10
+  SmallData        | D3D Shared Memory Used         | 585,92
+  SmallData        | D3D Shared Memory Free         | 29952,42
   SmallData        | D3D Shared Memory Total        | 30538,34
-  Load             | D3D 3D                         | 0,35
-  Load             | D3D Copy                       | 0,00
+  Load             | D3D 3D                         | 0,54
+  Load             | D3D Copy                       | 0,67
   Load             | D3D Compute 0                  | 0,00
   Load             | D3D Timer 0                    | 0,00
   Load             | D3D Security 1                 | 0,00
   Load             | D3D Video JPEG 0               | 0,00
   Load             | D3D Video Processor            | 0,00
   Load             | D3D Video Codec Engine         | 0,00
-  SmallData        | GPU Memory Used                | 2487,00
-  SmallData        | GPU Memory Free                | 1609,00
-  Clock            | GPU Core                       | 675,00
-  Clock            | GPU SoC                        | 719,00
-  Clock            | GPU Memory                     | 2317,00
-  Temperature      | GPU VR SoC                     | 52,00
-  Load             | GPU Core                       | 6,00
+  SmallData        | GPU Memory Used                | 2284,00
+  SmallData        | GPU Memory Free                | 1812,00
+  Clock            | GPU Core                       | 690,00
+  Clock            | GPU SoC                        | 753,00
+  Clock            | GPU Memory                     | 2575,00
+  Temperature      | GPU VR SoC                     | 56,00
+  Load             | GPU Core                       | 8,00
   Power            | GPU Core                       | 0,00

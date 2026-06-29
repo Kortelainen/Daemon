@@ -263,7 +263,7 @@ EbOverlay/
 | M2 | App name hook + clock rendering | ✅ Done |
 | M3 | System + network metrics live | ✅ Done |
 | M4 | Sprite zone with idle animation | ✅ |
-| M5 | Behavioral states wired to triggers | ⬜ |
+| M5 | Behavioral states wired to triggers | ✅ |
 | M6 | Scanline layer + config file | ⬜ |
 | M7 | Window-aware sprite — floats around active window edges, clips at border | ⬜ |
 | M8 | ALT layer — hint overlay + numpad zone cycling | ⬜ |

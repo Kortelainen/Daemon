@@ -101,11 +101,12 @@
 
         </StackPanel>
 
-        <!-- [MID-RIGHT] Sprite zone -->
-        <Image x:Name="SpriteImage"
-               Width="96" Height="96"
-               RenderOptions.BitmapScalingMode="NearestNeighbor"
-               Opacity="0.85" />
+        <!-- [MID-RIGHT] Sprite + status icon overlay -->
+        <Grid x:Name="SpriteContainer" Width="96" Height="96" Opacity="0.85">
+            <Image x:Name="SpriteImage"
+                   RenderOptions.BitmapScalingMode="NearestNeighbor" />
+            <ctrl:SpriteStatusLayer x:Name="StatusLayer" />
+        </Grid>
 
     </Canvas>
 </Window>

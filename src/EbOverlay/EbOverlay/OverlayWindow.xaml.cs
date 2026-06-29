@@ -17,7 +17,8 @@ public partial class OverlayWindow : Window
     private AppNameZone? _appNameZone;
     private ClockZone? _clockZone;
     private MetricsZone? _metricsZone;
-    private SpriteZone? _spriteZone;
+    private SpriteZone?      _spriteZone;
+    public  StatusIconZone?  StatusIconZone { get; private set; }
     private ForegroundProcessMetrics? _processMetrics;
 
     // Safe inset margins derived from WorkArea — respects taskbar on any edge
@@ -44,6 +45,8 @@ public partial class OverlayWindow : Window
             _processMetrics?.OnForegroundWindowChanged(hwnd);
             _spriteZone?.OnForegroundWindowChanged();
         };
+        _windowHook.WindowRestored  += () => _spriteZone?.OnWindowOpened();
+        _windowHook.WindowMinimized += () => _spriteZone?.OnWindowClosed();
 
         Loaded += OnLoaded;
 
@@ -79,12 +82,24 @@ public partial class OverlayWindow : Window
         {
             _metricsZone.OnProcessUpdated(snap);
             _spriteZone?.OnProcessUpdated(snap);
+            StatusIconZone?.OnProcessUpdated(snap);
         };
 
         string sheetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Sprites", "spritesheet.png");
         _spriteZone = new SpriteZone(SpriteImage, Dispatcher, sheetPath);
-        _metricsZone.SystemUpdated   += snap => _spriteZone.OnSystemUpdated(snap);
-        _metricsZone.HardwareUpdated += snap => _spriteZone.OnHardwareUpdated(snap);
+
+        StatusIconZone = new StatusIconZone(StatusLayer, Dispatcher);
+
+        _metricsZone.SystemUpdated += snap =>
+        {
+            _spriteZone.OnSystemUpdated(snap);
+            StatusIconZone.OnSystemUpdated(snap);
+        };
+        _metricsZone.HardwareUpdated += snap =>
+        {
+            _spriteZone.OnHardwareUpdated(snap);
+            StatusIconZone.OnHardwareUpdated(snap);
+        };
 
         _fullscreenTimer.Start();
     }
@@ -141,9 +156,9 @@ public partial class OverlayWindow : Window
         Canvas.SetTop(NetPanel,    double.NaN);
         Canvas.SetBottom(NetPanel, _safeArea.Bottom + pad);
 
-        // Mid-right: sprite
-        Canvas.SetLeft(SpriteImage, contentRight - 96);
-        Canvas.SetTop(SpriteImage,  Height / 2 - 48);
+        // Mid-right: sprite + status overlay container
+        Canvas.SetLeft(SpriteContainer, contentRight - 96);
+        Canvas.SetTop(SpriteContainer,  Height / 2 - 48);
     }
 
     private void SetClickThrough()

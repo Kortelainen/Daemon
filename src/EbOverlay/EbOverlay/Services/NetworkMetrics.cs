@@ -1,4 +1,5 @@
 using System.Net.NetworkInformation;
+using Timer = System.Threading.Timer;
 
 namespace EbOverlay.Services;
 

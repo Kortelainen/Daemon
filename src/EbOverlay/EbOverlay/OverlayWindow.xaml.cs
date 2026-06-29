@@ -17,6 +17,7 @@ public partial class OverlayWindow : Window
     private AppNameZone? _appNameZone;
     private ClockZone? _clockZone;
     private MetricsZone? _metricsZone;
+    private ForegroundProcessMetrics? _processMetrics;
 
     // Safe inset margins derived from WorkArea — respects taskbar on any edge
     private Thickness _safeArea;
@@ -31,7 +32,10 @@ public partial class OverlayWindow : Window
 
         _windowHook = new WindowHook();
         _windowHook.ForegroundWindowChanged += hwnd =>
+        {
             Dispatcher.Invoke(() => _appNameZone?.OnForegroundWindowChanged(hwnd));
+            _processMetrics?.OnForegroundWindowChanged(hwnd);
+        };
 
         Loaded += OnLoaded;
 
@@ -52,10 +56,13 @@ public partial class OverlayWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         _fullscreenDetector.OwnHwnd = hwnd;
 
-        _appNameZone  = new AppNameZone(AppNameText);
-        _clockZone    = new ClockZone(ClockText);
-        _metricsZone  = new MetricsZone(
-            CpuText, RamText, NetUpText, NetDownText, NetPanel, Dispatcher);
+        _appNameZone    = new AppNameZone(AppNameText);
+        _clockZone      = new ClockZone(ClockText);
+        _metricsZone    = new MetricsZone(
+            CpuText, RamText, NetUpText, NetDownText, NetPanel,
+            CpuBar, RamBar, UpSparkline, DownSparkline, Dispatcher);
+        _processMetrics = new ForegroundProcessMetrics();
+        _processMetrics.Updated += snap => _metricsZone.OnProcessUpdated(snap);
 
         _fullscreenTimer.Start();
     }
@@ -103,12 +110,12 @@ public partial class OverlayWindow : Window
         Canvas.SetTop(ClockText,  contentTop);
 
         // Bottom-right: system metrics
-        Canvas.SetLeft(MetricsPanel, contentRight - 120);
-        Canvas.SetTop(MetricsPanel,  contentBottom - 40);
+        Canvas.SetLeft(MetricsPanel, contentRight - 200);
+        Canvas.SetTop(MetricsPanel,  contentBottom - 70);
 
         // Bottom-left: network
         Canvas.SetLeft(NetPanel, contentLeft);
-        Canvas.SetTop(NetPanel,  contentBottom - 40);
+        Canvas.SetTop(NetPanel,  contentBottom - 80);
 
         // Mid-right: sprite
         Canvas.SetLeft(SpriteImage, contentRight - 96);
@@ -134,6 +141,7 @@ public partial class OverlayWindow : Window
         _fullscreenTimer.Stop();
         _windowHook.Dispose();
         _metricsZone?.Dispose();
+        _processMetrics?.Dispose();
         base.OnClosed(e);
     }
 }

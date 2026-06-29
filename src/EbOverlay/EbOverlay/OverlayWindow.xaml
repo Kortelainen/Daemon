@@ -1,6 +1,7 @@
 <Window x:Class="EbOverlay.OverlayWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:EbOverlay.Controls"
         Title="EbOverlay"
         WindowStyle="None"
         ResizeMode="NoResize"
@@ -11,7 +12,6 @@
         IsHitTestVisible="False">
 
     <Window.Resources>
-        <!-- Shared drop shadow — soft dark halo, readable on any background -->
         <DropShadowEffect x:Key="TextShadow"
                           Color="Black"
                           BlurRadius="4"
@@ -19,7 +19,6 @@
                           Opacity="0.95"
                           Direction="315" />
 
-        <!-- Base style applied to every overlay TextBlock -->
         <Style x:Key="OverlayText" TargetType="TextBlock">
             <Setter Property="Foreground"  Value="#66FF99" />
             <Setter Property="FontFamily"  Value="Courier New" />
@@ -33,49 +32,65 @@
         </Style>
     </Window.Resources>
 
-    <!-- Root canvas — full screen, all zones positioned in code-behind via PositionAllElements() -->
     <Canvas x:Name="RootCanvas">
 
-        <!-- [TOP-LEFT] App name — filled by AppNameZone in M2 -->
+        <!-- [TOP-LEFT] App name -->
         <TextBlock x:Name="AppNameText"
                    Style="{StaticResource OverlayText}"
                    Opacity="0"
                    Text="—" />
 
-        <!-- [TOP-RIGHT] Clock — filled by ClockZone in M2 -->
+        <!-- [TOP-RIGHT] Clock -->
         <TextBlock x:Name="ClockText"
                    Style="{StaticResource OverlayText}"
                    Opacity="0.6"
                    Text="00:00" />
 
-        <!-- [BOT-RIGHT] System metrics — filled by MetricsZone in M3 -->
+        <!-- [BOT-RIGHT] System + process metrics -->
         <StackPanel x:Name="MetricsPanel"
                     Orientation="Vertical"
-                    HorizontalAlignment="Right"
-                    Opacity="0.5">
+                    Opacity="0.5"
+                    Width="200">
+
             <TextBlock x:Name="CpuText"
                        Style="{StaticResource OverlayTextSmall}"
                        Text="CPU  --%"
                        HorizontalAlignment="Right" />
+            <ctrl:MetricBar x:Name="CpuBar"
+                            Height="3"
+                            Margin="0,2,0,6" />
+
             <TextBlock x:Name="RamText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="RAM  --/-- GB"
+                       Text="RAM  -- | -- GB"
                        HorizontalAlignment="Right" />
+            <ctrl:MetricBar x:Name="RamBar"
+                            Height="3"
+                            Margin="0,2,0,0" />
         </StackPanel>
 
-        <!-- [BOT-LEFT] Network metrics — filled by NetworkMetrics in M3 -->
+        <!-- [BOT-LEFT] Network metrics + sparklines -->
         <StackPanel x:Name="NetPanel"
                     Orientation="Vertical"
-                    Opacity="0.5">
+                    Opacity="0.5"
+                    Width="140">
+
             <TextBlock x:Name="NetUpText"
                        Style="{StaticResource OverlayTextSmall}"
                        Text="↑  --" />
+            <ctrl:Sparkline x:Name="UpSparkline"
+                            Height="20"
+                            Margin="0,2,0,4" />
+
             <TextBlock x:Name="NetDownText"
                        Style="{StaticResource OverlayTextSmall}"
                        Text="↓  --" />
+            <ctrl:Sparkline x:Name="DownSparkline"
+                            Height="20"
+                            Margin="0,2,0,0" />
         </StackPanel>
 
-        <!-- [MID-RIGHT] Sprite zone — filled by SpriteZone in M4 -->
+        <!-- [MID-RIGHT] Sprite zone -->
         <Image x:Name="SpriteImage"
                Width="96"
                Height="96"

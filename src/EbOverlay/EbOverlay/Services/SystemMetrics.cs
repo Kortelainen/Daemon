@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Timer = System.Threading.Timer;
 
 namespace EbOverlay.Services;
 
@@ -9,7 +10,7 @@ namespace EbOverlay.Services;
 /// </summary>
 public sealed class SystemMetrics : IDisposable
 {
-    public event Action<float, float, float>? Updated; // cpu%, usedGB, totalGB
+    public event Action<SystemSnapshot>? Updated;
 
     private readonly PerformanceCounter _cpuCounter;
     private readonly Timer _timer;
@@ -30,7 +31,7 @@ public sealed class SystemMetrics : IDisposable
         float totalGB = totalBytes / 1073741824f;
         float usedGB  = (totalBytes - availBytes) / 1073741824f;
 
-        Updated?.Invoke(cpu, usedGB, totalGB);
+        Updated?.Invoke(new SystemSnapshot(cpu, usedGB, totalGB));
     }
 
     private static void GetMemoryStatus(out ulong totalBytes, out ulong availBytes)

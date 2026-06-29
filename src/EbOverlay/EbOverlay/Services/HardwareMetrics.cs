@@ -28,7 +28,9 @@ public sealed class HardwareMetrics : IDisposable
         try { _computer.Open(); }
         catch { /* silently continue — sensors will report -1 */ }
 
+#if DEBUG
         DumpSensors();
+#endif
 
         _timer = new Timer(_ => Poll(), null, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
     }

@@ -1,6 +1,10 @@
 # Build output
 bin/
 obj/
+publish/
+
+# Debug artifacts
+sensor_dump.txt
 
 # Visual Studio / Rider
 .vs/

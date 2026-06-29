@@ -69,10 +69,10 @@ public sealed class SpriteZone : IDisposable
 
     // ── Construction ──────────────────────────────────────────────────────────
 
-    public SpriteZone(Image target, Dispatcher dispatcher, string sheetPath)
+    public SpriteZone(Image target, Dispatcher dispatcher)
     {
         _target = target;
-        _frames = LoadSheet(sheetPath);
+        _frames = LoadSheet();
 
         _animTimer = new DispatcherTimer();
         _animTimer.Tick += OnAnimTick;
@@ -258,11 +258,13 @@ public sealed class SpriteZone : IDisposable
 
     // ── Sprite sheet loader ───────────────────────────────────────────────────
 
-    private static CroppedBitmap[][] LoadSheet(string path)
+    private static CroppedBitmap[][] LoadSheet()
     {
+        // Loaded from the WPF resource embedded in the assembly — works in both
+        // debug (file on disk) and release (single-file publish) builds.
         var src = new BitmapImage();
         src.BeginInit();
-        src.UriSource     = new Uri(path, UriKind.Absolute);
+        src.UriSource     = new Uri("pack://application:,,,/Sprites/spritesheet.png");
         src.CacheOption   = BitmapCacheOption.OnLoad;
         src.CreateOptions = BitmapCreateOptions.None;
         src.EndInit();

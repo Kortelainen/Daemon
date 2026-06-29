@@ -60,6 +60,7 @@ public sealed class TrayIcon : IDisposable
 
         var separator = new ToolStripSeparator();
 
+#if DEBUG
         var testIconsItem = new ToolStripMenuItem("Test status icons")
         {
             CheckOnClick = true,
@@ -67,6 +68,7 @@ public sealed class TrayIcon : IDisposable
         };
         testIconsItem.CheckedChanged += (_, _) =>
             _overlay.StatusIconZone?.SetTestMode(testIconsItem.Checked);
+#endif
 
         var exitItem = new ToolStripMenuItem("Exit");
         exitItem.Click += (_, _) =>
@@ -79,7 +81,9 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add(separator);
         menu.Items.Add(pauseItem);
         menu.Items.Add(fullscreenItem);
+#if DEBUG
         menu.Items.Add(testIconsItem);
+#endif
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(exitItem);
 

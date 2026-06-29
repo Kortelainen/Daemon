@@ -85,8 +85,7 @@ public partial class OverlayWindow : Window
             StatusIconZone?.OnProcessUpdated(snap);
         };
 
-        string sheetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Sprites", "spritesheet.png");
-        _spriteZone = new SpriteZone(SpriteImage, Dispatcher, sheetPath);
+        _spriteZone = new SpriteZone(SpriteImage, Dispatcher);
 
         StatusIconZone = new StatusIconZone(StatusLayer, Dispatcher);
 

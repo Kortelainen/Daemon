@@ -247,7 +247,7 @@ EbOverlay/
 |---|------|--------|
 | M1 | Transparent click-through window, always on top, hides on fullscreen | ✅ Done |
 | M2 | App name hook + clock rendering | ✅ Done |
-| M3 | System + network metrics live | ⬜ |
+| M3 | System + network metrics live | ✅ Done |
 | M4 | Sprite zone with idle animation | ⬜ |
 | M5 | Behavioral states wired to triggers | ⬜ |
 | M6 | Scanline layer + config file | ⬜ |

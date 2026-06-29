@@ -5,6 +5,7 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using EbOverlay.Hooks;
 using EbOverlay.Zones;
+using EbOverlay.Services;
 
 namespace EbOverlay;
 
@@ -15,6 +16,7 @@ public partial class OverlayWindow : Window
     private readonly WindowHook _windowHook;
     private AppNameZone? _appNameZone;
     private ClockZone? _clockZone;
+    private MetricsZone? _metricsZone;
 
     // Safe inset margins derived from WorkArea — respects taskbar on any edge
     private Thickness _safeArea;
@@ -50,8 +52,10 @@ public partial class OverlayWindow : Window
         var hwnd = new WindowInteropHelper(this).Handle;
         _fullscreenDetector.OwnHwnd = hwnd;
 
-        _appNameZone = new AppNameZone(AppNameText);
-        _clockZone   = new ClockZone(ClockText);
+        _appNameZone  = new AppNameZone(AppNameText);
+        _clockZone    = new ClockZone(ClockText);
+        _metricsZone  = new MetricsZone(
+            CpuText, RamText, NetUpText, NetDownText, NetPanel, Dispatcher);
 
         _fullscreenTimer.Start();
     }
@@ -129,6 +133,7 @@ public partial class OverlayWindow : Window
     {
         _fullscreenTimer.Stop();
         _windowHook.Dispose();
+        _metricsZone?.Dispose();
         base.OnClosed(e);
     }
 }

@@ -10,22 +10,41 @@
         Topmost="True"
         IsHitTestVisible="False">
 
+    <Window.Resources>
+        <!-- Shared drop shadow — soft dark halo, readable on any background -->
+        <DropShadowEffect x:Key="TextShadow"
+                          Color="Black"
+                          BlurRadius="4"
+                          ShadowDepth="1"
+                          Opacity="0.95"
+                          Direction="315" />
+
+        <!-- Base style applied to every overlay TextBlock -->
+        <Style x:Key="OverlayText" TargetType="TextBlock">
+            <Setter Property="Foreground"  Value="#66FF99" />
+            <Setter Property="FontFamily"  Value="Courier New" />
+            <Setter Property="FontSize"    Value="13" />
+            <Setter Property="FontWeight"  Value="Bold" />
+            <Setter Property="Effect"      Value="{StaticResource TextShadow}" />
+        </Style>
+
+        <Style x:Key="OverlayTextSmall" TargetType="TextBlock" BasedOn="{StaticResource OverlayText}">
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+    </Window.Resources>
+
     <!-- Root canvas — full screen, all zones positioned in code-behind via PositionAllElements() -->
     <Canvas x:Name="RootCanvas">
 
         <!-- [TOP-LEFT] App name — filled by AppNameZone in M2 -->
         <TextBlock x:Name="AppNameText"
-                   Foreground="#66FF99"
-                   FontFamily="Courier New"
-                   FontSize="13"
+                   Style="{StaticResource OverlayText}"
                    Opacity="0"
                    Text="—" />
 
         <!-- [TOP-RIGHT] Clock — filled by ClockZone in M2 -->
         <TextBlock x:Name="ClockText"
-                   Foreground="#66FF99"
-                   FontFamily="Courier New"
-                   FontSize="13"
+                   Style="{StaticResource OverlayText}"
                    Opacity="0.6"
                    Text="00:00" />
 
@@ -35,15 +54,11 @@
                     HorizontalAlignment="Right"
                     Opacity="0.5">
             <TextBlock x:Name="CpuText"
-                       Foreground="#66FF99"
-                       FontFamily="Courier New"
-                       FontSize="11"
+                       Style="{StaticResource OverlayTextSmall}"
                        Text="CPU  --%"
                        HorizontalAlignment="Right" />
             <TextBlock x:Name="RamText"
-                       Foreground="#66FF99"
-                       FontFamily="Courier New"
-                       FontSize="11"
+                       Style="{StaticResource OverlayTextSmall}"
                        Text="RAM  --/-- GB"
                        HorizontalAlignment="Right" />
         </StackPanel>
@@ -53,14 +68,10 @@
                     Orientation="Vertical"
                     Opacity="0.5">
             <TextBlock x:Name="NetUpText"
-                       Foreground="#66FF99"
-                       FontFamily="Courier New"
-                       FontSize="11"
+                       Style="{StaticResource OverlayTextSmall}"
                        Text="↑  --" />
             <TextBlock x:Name="NetDownText"
-                       Foreground="#66FF99"
-                       FontFamily="Courier New"
-                       FontSize="11"
+                       Style="{StaticResource OverlayTextSmall}"
                        Text="↓  --" />
         </StackPanel>
 

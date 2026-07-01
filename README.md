@@ -1,32 +1,22 @@
-# EbOverlay
+# Daemon
 
-A lightweight, always-on-top Windows desktop overlay inspired by the aesthetic of Cowboy Bebop's Ed.
-Ambient system information and a hand-drawn sprite companion — present but not intrusive.
-
----
-
-## Philosophy
-
-> "Ambient intelligence" — the overlay should feel like the OS *has a soul*, not like a widget app running on top of it.
-
-Always running. Low noise. Low resource use. Reacts to the system, not the user.
+A lightweight Windows desktop overlay that gives your machine a personality.
+Ambient system stats, a reactive sprite companion, always on top — never in the way.
 
 ---
 
-## Display Zones
+## What it does
+
+Daemon sits transparently over your desktop and reacts to what your system is actually doing — app switches, CPU spikes, idle time, heat. It's not a widget panel. It's closer to a spirit that lives in the corner of your screen.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  [TOP-LEFT]              [TOP-CENTER]            [TOP-RIGHT] │
-│  Active App Name         —                       Clock       │
+│  Active App Name                                  Clock      │
 │                                                              │
+│                                                   Sprite     │
+│                                                   + status   │
 │                                                              │
-│                                                  [MID-RIGHT] │
-│                                                  Sprite zone │
-│                                                              │
-│                                                              │
-│  [BOT-LEFT]                                  [BOT-RIGHT]    │
-│  Net ↑↓ metrics          —                   CPU / RAM bar  │
+│  Net ↑↓                                  CPU / GPU / RAM    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -34,224 +24,67 @@ All zones are sparse — anchored at screen edges, not filled.
 
 ---
 
-## Feature Set
+## Features
 
-### 1. Active App Display (top-left)
-- Hook `SetWinEventHook` → `EVENT_SYSTEM_FOREGROUND`
-- Show focused app name in monospace, Ed-aesthetic font
-- Fade-in on change, hold ~4s, fade-out
-- Optional: show small app icon glyph
+**System metrics** — CPU, GPU, VRAM, RAM, Disk, Network. Each with a live sparkline and two-tone bar. App-level and system-level CPU/RAM shown side by side. Hardware temps via LibreHardwareMonitor.
 
-### 2. Clock (top-right)
-- Minimal `HH:MM` or `HH:MM:SS`
-- Optional glitch frame on minute rollover
+**Sprite companion** — animated character that reacts to system state. Idle, sleep, wake, window events, CPU spikes, heat warnings. Priority-based state machine with randomised transitions.
 
-### 3. System Metrics (bottom-right)
-Each metric renders a label line + two-tone bar + sparkline. All metrics are visible by default; M8 config will allow hiding individual rows.
+**Status icons** — persistent corner indicators on the sprite for conditions that need attention (heat, load) without interrupting the animation.
 
-| Metric | Source | Notes |
-|--------|--------|-------|
-| CPU % | `PerformanceCounter` | App % \| system %, red when > 70% |
-| CPU temp | LibreHardwareMonitor | Shown inline with CPU label. Requires admin on some systems |
-| GPU % | LibreHardwareMonitor | — when GPU unavailable |
-| GPU temp | LibreHardwareMonitor | Shown inline with GPU label |
-| VRAM | LibreHardwareMonitor | Used \| total GB |
-| RAM | `GlobalMemoryStatusEx` | App MB \| used GB \| total GB, grouped by process name |
-| Disk | `PerformanceCounter` | Read ↑ / write ↓ KB/s or MB/s, dual sparklines |
+**App name zone** — fades in the foreground window title on switch, holds, fades out.
 
-**App-level metrics** (CPU, RAM) group all processes sharing the same name — correctly accounts for multi-process apps like browsers and Electron apps.
+**Clock** — minimal `HH:MM` with a glitch flicker on minute rollover.
 
-**LibreHardwareMonitor** (`LibreHardwareMonitorLib`, MPL-2.0) is used for hardware sensor access. Sensors silently report `—` when unavailable rather than crashing.
+**Accent color** — pick your color from the tray. Applies to all text, bars, and sparklines. Saved across restarts.
 
-### 4. Network Metrics (bottom-left)
-- Upload ↑ / Download ↓ in KB/s or MB/s, each with a scrolling sparkline
-- Panel dims to near-invisible when idle (< 1 KB/s), brightens on traffic
-- Polled via `NetworkInterface.GetAllNetworkInterfaces()` — all active non-loopback NICs summed
-
-### 5. Sprite / Character Zone (mid-right)
-- Hand-drawn sprite sheet (provided separately)
-- States: **idle** (slow blink/breathe), **active** (CPU spike or app switch), **sleep** (after 10min no input)
-- Rendered via `WriteableBitmap`, frame-stepped — intentional low FPS (4–8) for pixel art feel
-
-### 6. Ambient Scanline Layer (optional)
-- ~3–5% opacity animated scanline across full screen
-- Gives the desktop a subtle "CRT screen" feel
-- Toggleable in config — first to cut if too distracting
+**Tray control** — pause, show/hide sprite, fullscreen-hide toggle, color theme. Settings persisted to `%APPDATA%\Daemon\settings.json`.
 
 ---
 
-## Window-Aware Sprite (M7)
+## Sprite states
 
-Instead of being pinned to a fixed screen corner, the sprite floats along the edges of the active foreground window — like Ed crawling around the frame of whatever you're working in.
-
-### How it tracks the window
-
-- `GetWindowRect(hwnd)` returns the exact pixel rect of the foreground window
-- `SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE)` fires in real time when the window moves or resizes — no polling needed
-- The sprite's canvas position is recalculated from the window rect on every location event
-
-### Movement path
-
-The sprite walks a clockwise (or random-wandering) path along the four edges of the window rect:
-
-```
-  ┌──────────────────────────────┐
-  │  top edge →→→→→→→→→→→→→→→→  │
-  │                           ↓  │
-  │  ←←←←←←←←←←←←←←← bot edge  │
-  ↑                              │
-  │                   right edge ↓
-```
-
-Speed and direction can react to system events (CPU spike = frantic scurry, idle = slow drift).
-
-### Simulating "behind the window" — edge clipping
-
-The overlay always sits above other windows, so the sprite cannot truly go behind. Instead a `RectangleGeometry` clip is applied to the sprite that shrinks as the sprite crosses the window border, making it appear to slide underneath the frame:
-
-```
-  Window border
-       │
-  ████░░    ← sprite half-clipped, looks like it's behind the chrome
-       │
-```
-
-As the sprite rounds a corner and "emerges" on the other side, the clip expands back to full. The effect is convincing at normal sprite sizes (64–96px).
-
-### Window drag interaction
-
-If the user drags the window while the sprite is on it, the sprite moves with the window in real time (same location event). Optional: add a small "lag" lerp so the sprite appears to be pulled along rather than snapping.
-
-### Fallback
-
-When no window is focused (desktop, fullscreen, etc.) the sprite returns to its default pinned corner and idles there until a window is foregrounded again.
-
-### Technical notes
-
-- Uses `WinEventHook` with `EVENT_OBJECT_LOCATIONCHANGE` + `EVENT_SYSTEM_FOREGROUND` — no polling
-- Clip geometry: WPF `UIElement.Clip` with a `RectangleGeometry` updated on each sprite position tick
-- Path walking: simple parametric position along perimeter (0.0–4.0 maps to 4 edges), updated by a `DispatcherTimer` at 30 FPS
-- Two-layer overlay (true z-order behind window) is possible but deferred — clipping achieves 90% of the visual at 10% of the complexity
+| State | Trigger |
+|-------|---------|
+| Sleep | No input > 10 min |
+| Idle / Curious | Default, mouse still > 30s |
+| Wake Up | Input resumes after sleep |
+| Window Switch / Open / Close | Foreground window events |
+| CPU High | System CPU > 70% |
+| App CPU High | Foreground app CPU > 50% |
+| Heat Warn | Any sensor > 75°C |
+| Heat Critical | Any sensor > 90°C |
+| Smile / Stare | Randomised one-shots |
 
 ---
 
-## Keyboard Control — ALT Layer
+## Tech
 
-Holding **ALT** reveals a translucent hint overlay showing what each numpad key does in the current context. Release ALT to dismiss it. No ALT held = overlay is fully passive and click-through.
-
-### Numpad = Screen Grid
-
-The numpad layout maps 1:1 to screen regions:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  [7] top-left            [8] top-center        [9] top-right │
-│                                                              │
-│  [4] mid-left            [5] CENTER            [6] mid-right │
-│                                                              │
-│  [1] bot-left            [2] bot-center        [3] bot-right │
-└─────────────────────────────────────────────────────────────┘
-
-  Numpad:       7  8  9
-                4  5  6
-                1  2  3
-```
-
-### Bindings
-
-| Key | Zone | Action |
-|-----|------|--------|
-| ALT+1 | Bottom-left | Cycle views: Net ↑↓ → IP info → hidden |
-| ALT+2 | Bottom-center | Cycle views: (reserved / future) |
-| ALT+3 | Bottom-right | Cycle views: CPU+RAM → CPU only → RAM only → hidden |
-| ALT+4 | Mid-left | Cycle views: (reserved / future) |
-| ALT+5 | Global | Toggle show/hide entire overlay |
-| ALT+6 | Mid-right | Toggle show/hide sprite |
-| ALT+7 | Top-left | Cycle views: App name → App name + icon → hidden |
-| ALT+8 | Top-center | Cycle views: (reserved / future) |
-| ALT+9 | Top-right | Cycle views: Clock HH:MM → HH:MM:SS → hidden |
-
-### ALT Hint Overlay
-
-While ALT is held, a minimal dim panel fades in showing:
-- Which zones are currently visible (lit) vs hidden (dim)
-- The key number anchored near each screen corner it controls
-- Disappears instantly on ALT release — no lingering chrome
-
-### Design Notes
-
-- ALT is chosen because it rarely conflicts with foreground apps (most apps don't use bare ALT+numpad)
-- "Cycle" means each press steps through the mode list in order, wrapping around
-- `settings.json` persists the last selected mode per zone across restarts
-- Reserved zones (2, 4, 8) are intentional — space for future views without redesigning the scheme
+- **C# / .NET 8 / WPF**
+- **Rendering** — `CroppedBitmap` sprite frames, `FormattedText.BuildGeometry()` for outlined text, custom `FrameworkElement` controls for bars and sparklines
+- **Win32 hooks** — `SetWinEventHook` for foreground, minimize, restore events; `GetLastInputInfo` for idle detection
+- **Hardware sensors** — [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0)
+- **Transparency** — `WS_EX_LAYERED | WS_EX_NOACTIVATE`, click-through
 
 ---
 
-## Behavioral Rules
+## Running from source
 
-| Trigger | Response |
-|---------|----------|
-| App focus changes | App name fades in, sprite perks up (1 cycle) |
-| CPU > 70% | Sprite switches to active state |
-| No input > 10 min | Sprite enters sleep, metrics dim to 30% opacity |
-| Input resumes | Everything fades back in |
-| Fullscreen app detected | Overlay hides entirely |
-| Network burst > 1 MB/s | Net indicator highlights briefly |
-
----
-
-## Performance Budget
-
-| Component | CPU (idle) | RAM |
-|-----------|-----------|-----|
-| Overlay process total | < 0.5% | < 60 MB |
-| Sprite animation | < 0.1% | — |
-| Metrics polling | < 0.1% | — |
-| Render loop | 30 FPS cap, drops to 10 FPS when idle | — |
-
----
-
-## Tech Stack
-
-- **Language**: C# (.NET 8)
-- **UI**: WPF
-- **Rendering**: `WriteableBitmap` for sprites, WPF canvas for text/bars
-- **System hooks**: Win32 `SetWinEventHook`, `PerformanceCounter`, `NetworkInterface`
-- **Hardware sensors**: [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0) — CPU/GPU temps, VRAM, GPU load
-- **Transparency**: `WS_EX_LAYERED` + `WS_EX_TRANSPARENT` (click-through)
-
----
-
-## Project Structure
-
+```bash
+cd src/EbOverlay
+dotnet run
 ```
-EbOverlay/
-├── README.md
-└── src/
-    └── EbOverlay/
-        ├── App.xaml
-        ├── App.xaml.cs
-        ├── OverlayWindow.xaml
-        ├── OverlayWindow.xaml.cs
-        ├── Zones/
-        │   ├── AppNameZone.cs       # M2
-        │   ├── ClockZone.cs         # M2
-        │   ├── MetricsZone.cs       # M3
-        │   └── SpriteZone.cs        # M4
-        ├── Hooks/
-        │   ├── WindowHook.cs        # M2 — SetWinEventHook wrapper
-        │   ├── FullscreenDetector.cs # M1
-        │   ├── KeyboardHook.cs      # M8 — global low-level keyboard hook
-        │   └── WindowLocationHook.cs # M7 — EVENT_OBJECT_LOCATIONCHANGE watcher
-        ├── Services/
-        │   ├── SystemMetrics.cs     # M3
-        │   ├── NetworkMetrics.cs    # M3
-        │   ├── SpritePathController.cs # M7 — perimeter walking + clip geometry
-        │   └── ZoneStateManager.cs  # M8 — tracks mode per zone, persists to settings.json
-        ├── Sprites/                 # Drop sprite sheets here
-        └── Config/
-            └── settings.json        # Opacity, zones on/off, poll rates
+
+Requires .NET 8 SDK. Windows only.
+
+## Release build
+
+```bash
+dotnet restore -r win-x64
+dotnet publish -p:PublishProfile=Release-x64
 ```
+
+Produces a single self-contained `.exe` in `publish/` — no installer, no dependencies.
 
 ---
 
@@ -259,22 +92,11 @@ EbOverlay/
 
 | # | Goal | Status |
 |---|------|--------|
-| M1 | Transparent click-through window, always on top, hides on fullscreen | ✅ Done |
-| M2 | App name hook + clock rendering | ✅ Done |
-| M3 | System + network metrics live | ✅ Done |
-| M4 | Sprite zone with idle animation (place holder sprite sheet) | ✅ Done |
-| M5 | Behavioral states wired to triggers | ✅ Done |
-| M6 | Scanline layer + config file | ⬜ |
-| M7 | Window-aware sprite — floats around active window edges, clips at border | ⬜ |
-| M8 | ALT layer — hint overlay + numpad zone cycling | ⬜ |
-
----
-
-## Running
-
-```bash
-cd src/EbOverlay
-dotnet run
-```
-
-Requires .NET 8 SDK. Targets Windows only (`net8.0-windows`).
+| M1 | Transparent click-through window, fullscreen detection | ✅ |
+| M2 | App name hook + clock | ✅ |
+| M3 | System, hardware, network metrics | ✅ |
+| M4 | Sprite zone with animation state machine | ✅ |
+| M5 | Behavioral rules engine wired to all triggers | ✅ |
+| M6 | Scanline layer + tray icon asset | ⬜ |
+| M7 | Window-aware sprite — walks active window edges | ⬜ |
+| M8 | Keyboard control layer + zone config | ⬜ |

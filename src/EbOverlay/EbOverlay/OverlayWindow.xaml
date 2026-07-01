@@ -12,18 +12,15 @@
         IsHitTestVisible="False">
 
     <Window.Resources>
-        <DropShadowEffect x:Key="TextShadow"
-                          Color="Black" BlurRadius="4"
-                          ShadowDepth="1" Opacity="0.95" Direction="315" />
-
-        <Style x:Key="OverlayText" TargetType="TextBlock">
-            <Setter Property="Foreground"  Value="#66FF99" />
-            <Setter Property="FontFamily"  Value="Courier New" />
-            <Setter Property="FontSize"    Value="13" />
-            <Setter Property="FontWeight"  Value="Bold" />
-            <Setter Property="Effect"      Value="{StaticResource TextShadow}" />
+        <Style x:Key="OverlayText" TargetType="ctrl:OutlinedTextBlock">
+            <Setter Property="FontFamily"       Value="Courier New" />
+            <Setter Property="FontSize"         Value="13" />
+            <Setter Property="FontWeight"       Value="Bold" />
+            <Setter Property="Foreground"       Value="#66FF99" />
+            <Setter Property="OutlineThickness" Value="2" />
         </Style>
-        <Style x:Key="OverlayTextSmall" TargetType="TextBlock" BasedOn="{StaticResource OverlayText}">
+        <Style x:Key="OverlayTextSmall" TargetType="ctrl:OutlinedTextBlock"
+               BasedOn="{StaticResource OverlayText}">
             <Setter Property="FontSize" Value="11" />
         </Style>
     </Window.Resources>
@@ -31,12 +28,12 @@
     <Canvas x:Name="RootCanvas">
 
         <!-- [TOP-LEFT] App name -->
-        <TextBlock x:Name="AppNameText"
+        <ctrl:OutlinedTextBlock x:Name="AppNameText"
                    Style="{StaticResource OverlayText}"
                    Opacity="0" Text="—" />
 
         <!-- [TOP-RIGHT] Clock -->
-        <TextBlock x:Name="ClockText"
+        <ctrl:OutlinedTextBlock x:Name="ClockText"
                    Style="{StaticResource OverlayText}"
                    Opacity="0.6" Text="00:00" />
 
@@ -47,37 +44,37 @@
                     Width="220">
 
             <!-- CPU -->
-            <TextBlock x:Name="CpuText"
+            <ctrl:OutlinedTextBlock x:Name="CpuText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="CPU  --%" HorizontalAlignment="Right" />
+                       Text="CPU  --%" TextAlignment="Right" />
             <ctrl:MetricBar x:Name="CpuBar" Height="3" Margin="0,2,0,2" />
             <ctrl:Sparkline x:Name="CpuSparkline" Height="18" Margin="0,0,0,6" />
 
             <!-- GPU -->
-            <TextBlock x:Name="GpuText"
+            <ctrl:OutlinedTextBlock x:Name="GpuText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="GPU  --%" HorizontalAlignment="Right" />
+                       Text="GPU  --%" TextAlignment="Right" />
             <ctrl:MetricBar x:Name="GpuBar" Height="3" Margin="0,2,0,2" />
             <ctrl:Sparkline x:Name="GpuSparkline" Height="18" Margin="0,0,0,6" />
 
             <!-- VRAM -->
-            <TextBlock x:Name="VramText"
+            <ctrl:OutlinedTextBlock x:Name="VramText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="VRAM  -- | -- GB" HorizontalAlignment="Right" />
+                       Text="VRAM  -- | -- GB" TextAlignment="Right" />
             <ctrl:MetricBar x:Name="VramBar" Height="3" Margin="0,2,0,2" />
             <ctrl:Sparkline x:Name="VramSparkline" Height="18" Margin="0,0,0,6" />
 
             <!-- RAM -->
-            <TextBlock x:Name="RamText"
+            <ctrl:OutlinedTextBlock x:Name="RamText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="RAM  -- | -- GB" HorizontalAlignment="Right" />
+                       Text="RAM  -- | -- GB" TextAlignment="Right" />
             <ctrl:MetricBar x:Name="RamBar" Height="3" Margin="0,2,0,2" />
             <ctrl:Sparkline x:Name="RamSparkline" Height="18" Margin="0,0,0,6" />
 
             <!-- DISK -->
-            <TextBlock x:Name="DiskText"
+            <ctrl:OutlinedTextBlock x:Name="DiskText"
                        Style="{StaticResource OverlayTextSmall}"
-                       Text="DISK  ↑-- ↓--" HorizontalAlignment="Right" />
+                       Text="DISK  ↑-- ↓--" TextAlignment="Right" />
             <ctrl:Sparkline x:Name="DiskReadSparkline"  Height="18" Margin="0,2,0,2" />
             <ctrl:Sparkline x:Name="DiskWriteSparkline" Height="18" Margin="0,0,0,0" />
 
@@ -89,12 +86,12 @@
                     Opacity="0.55"
                     Width="140">
 
-            <TextBlock x:Name="NetUpText"
+            <ctrl:OutlinedTextBlock x:Name="NetUpText"
                        Style="{StaticResource OverlayTextSmall}"
                        Text="↑  --" />
             <ctrl:Sparkline x:Name="UpSparkline" Height="20" Margin="0,2,0,4" />
 
-            <TextBlock x:Name="NetDownText"
+            <ctrl:OutlinedTextBlock x:Name="NetDownText"
                        Style="{StaticResource OverlayTextSmall}"
                        Text="↓  --" />
             <ctrl:Sparkline x:Name="DownSparkline" Height="20" Margin="0,2,0,0" />

@@ -10,8 +10,8 @@ namespace EbOverlay.Zones;
 public class MetricsZone : IDisposable
 {
     // Text labels
-    private readonly TextBlock _cpuText, _gpuText, _vramText, _ramText, _diskText;
-    private readonly TextBlock _netUpText, _netDownText;
+    private readonly OutlinedTextBlock _cpuText, _gpuText, _vramText, _ramText, _diskText;
+    private readonly OutlinedTextBlock _netUpText, _netDownText;
 
     // Bars
     private readonly MetricBar _cpuBar, _gpuBar, _vramBar, _ramBar;
@@ -46,15 +46,15 @@ public class MetricsZone : IDisposable
     public event Action<SystemSnapshot>?   SystemUpdated;
     public event Action<HardwareSnapshot>? HardwareUpdated;
 
-    private static readonly SolidColorBrush GreenBrush = new(Color.FromRgb(0x66, 0xFF, 0x99));
+    private SolidColorBrush _accentBrush = new(Color.FromRgb(0x66, 0xFF, 0x99));
     private static readonly SolidColorBrush RedBrush   = new(Color.FromRgb(0xFF, 0x66, 0x66));
     private const float CpuHighThreshold    = 70f;
     private const double NetIdleThresholdKBs = 1.0;
 
     public MetricsZone(
-        TextBlock cpuText, TextBlock gpuText, TextBlock vramText,
-        TextBlock ramText, TextBlock diskText,
-        TextBlock netUpText, TextBlock netDownText,
+        OutlinedTextBlock cpuText, OutlinedTextBlock gpuText, OutlinedTextBlock vramText,
+        OutlinedTextBlock ramText, OutlinedTextBlock diskText,
+        OutlinedTextBlock netUpText, OutlinedTextBlock netDownText,
         StackPanel netPanel,
         MetricBar cpuBar, MetricBar gpuBar, MetricBar vramBar, MetricBar ramBar,
         Sparkline cpuSparkline, Sparkline gpuSparkline, Sparkline vramSparkline,
@@ -105,7 +105,7 @@ public class MetricsZone : IDisposable
                 : $"CPU  {sys.CpuPercent:F0}%";
             if (hw?.HasCpuTemp == true) cpuLabel += $"   {hw.CpuTempC:F0}°C";
             _cpuText.Text = cpuLabel;
-            _cpuText.Foreground = sys.CpuPercent >= CpuHighThreshold ? RedBrush : GreenBrush;
+            _cpuText.Foreground = sys.CpuPercent >= CpuHighThreshold ? RedBrush : _accentBrush;
             _cpuBar.LeftRatio  = proc?.CpuRatio ?? 0;
             _cpuBar.RightRatio = sys.CpuRatio;
             _cpuBuf.Push(sys.CpuPercent);
@@ -183,6 +183,16 @@ public class MetricsZone : IDisposable
         if (kbs >= 1024) return $"{kbs / 1024:F1} MB/s";
         if (kbs >= 1)    return $"{kbs:F0} KB/s";
         return "—";
+    }
+
+    public void SetAccentColor(Color c)
+    {
+        _accentBrush = new SolidColorBrush(c);
+        foreach (var bar in new[] { _cpuBar, _gpuBar, _vramBar, _ramBar })
+            bar.SetAccentColor(c);
+        foreach (var spark in new[] { _cpuSparkline, _gpuSparkline, _vramSparkline, _ramSparkline,
+                                      _diskReadSparkline, _diskWriteSparkline, _upSparkline, _downSparkline })
+            spark.SetAccentColor(c);
     }
 
     public void Dispose()

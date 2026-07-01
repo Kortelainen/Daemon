@@ -14,6 +14,7 @@ public partial class OverlayWindow : Window
     private readonly FullscreenDetector _fullscreenDetector;
     private readonly DispatcherTimer _fullscreenTimer;
     private readonly WindowHook _windowHook;
+    private readonly SettingsStore _settings;
     private AppNameZone? _appNameZone;
     private ClockZone? _clockZone;
     private MetricsZone? _metricsZone;
@@ -32,7 +33,11 @@ public partial class OverlayWindow : Window
     /// <summary>
     /// When false the fullscreen detector is bypassed — overlay stays visible over fullscreen apps.
     /// </summary>
-    public bool FullscreenHideEnabled { get; set; } = true;
+    public bool FullscreenHideEnabled
+    {
+        get => _settings.FullscreenHideEnabled;
+        set => _settings.FullscreenHideEnabled = value;
+    }
 
     /// <summary>
     /// Show or hide the sprite character without affecting other overlay elements.
@@ -40,7 +45,17 @@ public partial class OverlayWindow : Window
     public bool SpriteVisible
     {
         get => SpriteContainer.Visibility == Visibility.Visible;
-        set => SpriteContainer.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+        set { SpriteContainer.Visibility = value ? Visibility.Visible : Visibility.Collapsed; _settings.SpriteVisible = value; }
+    }
+
+    public void SetAccentColor(System.Windows.Media.Color color)
+    {
+        _settings.SetAccentColor(color);
+        var brush = new System.Windows.Media.SolidColorBrush(color);
+        foreach (var tb in new Controls.OutlinedTextBlock[]
+            { AppNameText, ClockText, CpuText, GpuText, VramText, RamText, DiskText, NetUpText, NetDownText })
+            tb.Foreground = brush;
+        _metricsZone?.SetAccentColor(color);
     }
 
     public void SetPaused(bool paused)
@@ -49,8 +64,9 @@ public partial class OverlayWindow : Window
         Visibility = paused ? Visibility.Hidden : Visibility.Visible;
     }
 
-    public OverlayWindow()
+    public OverlayWindow(SettingsStore settings)
     {
+        _settings = settings;
         InitializeComponent();
 
         _fullscreenDetector = new FullscreenDetector();
@@ -120,6 +136,10 @@ public partial class OverlayWindow : Window
         };
 
         _fullscreenTimer.Start();
+
+        // Restore saved settings
+        SetAccentColor(_settings.AccentColor);
+        SpriteContainer.Visibility = _settings.SpriteVisible ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void StretchToFullScreen()

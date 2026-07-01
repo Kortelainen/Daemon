@@ -14,10 +14,13 @@ public partial class App : Application
         // Prevent WPF from shutting down when overlay is hidden
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        var overlay = new OverlayWindow();
+        var settings = new SettingsStore();
+        settings.Load();
+
+        var overlay = new OverlayWindow(settings);
         overlay.Show();
 
-        _trayIcon = new TrayIcon(overlay);
+        _trayIcon = new TrayIcon(overlay, settings);
     }
 
     protected override void OnExit(ExitEventArgs e)

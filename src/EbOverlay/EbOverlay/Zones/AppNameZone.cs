@@ -1,9 +1,9 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using EbOverlay.Controls;
 
 namespace EbOverlay.Zones;
 
@@ -13,14 +13,14 @@ namespace EbOverlay.Zones;
 /// </summary>
 public class AppNameZone
 {
-    private readonly TextBlock _label;
+    private readonly OutlinedTextBlock _label;
     private readonly DispatcherTimer _holdTimer;
 
     private static readonly Duration FadeInDuration  = new(TimeSpan.FromMilliseconds(300));
     private static readonly Duration FadeOutDuration = new(TimeSpan.FromMilliseconds(1200));
     private const double HoldSeconds = 4;
 
-    public AppNameZone(TextBlock label)
+    public AppNameZone(OutlinedTextBlock label)
     {
         _label = label;
 

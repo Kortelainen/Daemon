@@ -1,5 +1,5 @@
-using System.Windows.Controls;
 using System.Windows.Threading;
+using EbOverlay.Controls;
 
 namespace EbOverlay.Zones;
 
@@ -9,11 +9,11 @@ namespace EbOverlay.Zones;
 /// </summary>
 public class ClockZone
 {
-    private readonly TextBlock _label;
+    private readonly OutlinedTextBlock _label;
     private readonly DispatcherTimer _timer;
     private int _lastMinute = -1;
 
-    public ClockZone(TextBlock label)
+    public ClockZone(OutlinedTextBlock label)
     {
         _label = label;
 

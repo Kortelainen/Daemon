@@ -17,8 +17,16 @@ public sealed class Sparkline : FrameworkElement
     private double[] _values = [];
     private double   _peak   = 1.0; // avoid divide-by-zero on empty buffer
 
-    private static readonly Pen  LinePen  = new(new SolidColorBrush(Color.FromArgb(0xAA, 0x66, 0xFF, 0x99)), 1.0);
-    private static readonly Brush FillBrush = new SolidColorBrush(Color.FromArgb(0x22, 0x66, 0xFF, 0x99));
+    private Pen   _linePen   = new(new SolidColorBrush(Color.FromArgb(0xAA, 0x66, 0xFF, 0x99)), 1.0);
+    private Brush _fillBrush = new SolidColorBrush(Color.FromArgb(0x22, 0x66, 0xFF, 0x99));
+    private static readonly Pen OutlinePen = new(new SolidColorBrush(Color.FromArgb(0x88, 0, 0, 0)), 2.5) { LineJoin = PenLineJoin.Round };
+
+    public void SetAccentColor(Color c)
+    {
+        _linePen  = new Pen(new SolidColorBrush(Color.FromArgb(0xAA, c.R, c.G, c.B)), 1.0);
+        _fillBrush = new SolidColorBrush(Color.FromArgb(0x22, c.R, c.G, c.B));
+        InvalidateVisual();
+    }
 
     public void Update(double[] values, double peak)
     {
@@ -55,6 +63,8 @@ public sealed class Sparkline : FrameworkElement
         }
 
         geometry.Freeze();
-        dc.DrawGeometry(FillBrush, LinePen, geometry);
+        // Outline pass first (drawn under), then fill + line on top
+        dc.DrawGeometry(null, OutlinePen, geometry);
+        dc.DrawGeometry(_fillBrush, _linePen, geometry);
     }
 }

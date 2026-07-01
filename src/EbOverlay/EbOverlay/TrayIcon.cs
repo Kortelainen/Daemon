@@ -12,10 +12,12 @@ public sealed class TrayIcon : IDisposable
 {
     private readonly NotifyIcon _notify;
     private readonly OverlayWindow _overlay;
+    private readonly SettingsStore _settings;
 
-    public TrayIcon(OverlayWindow overlay)
+    public TrayIcon(OverlayWindow overlay, SettingsStore settings)
     {
-        _overlay = overlay;
+        _overlay  = overlay;
+        _settings = settings;
 
         _notify = new NotifyIcon
         {
@@ -57,12 +59,37 @@ public sealed class TrayIcon : IDisposable
         spriteItem.CheckedChanged += (_, _) =>
             _overlay.Dispatcher.Invoke(() => _overlay.SpriteVisible = spriteItem.Checked);
 
+        // Color theme submenu
+        var colorMenu = new ToolStripMenuItem("Text color");
+        for (int i = 0; i < AccentTheme.Presets.Length; i++)
+        {
+            var (name, color) = AccentTheme.Presets[i];
+            var item = new ToolStripMenuItem(name) { Checked = i == 0 };
+            item.Click += (_, _) =>
+            {
+                foreach (ToolStripMenuItem sibling in colorMenu.DropDownItems)
+                    sibling.Checked = false;
+                item.Checked = true;
+                _overlay.Dispatcher.Invoke(() => _overlay.SetAccentColor(color));
+            };
+            colorMenu.DropDownItems.Add(item);
+        }
+
         // Keep menu labels in sync with actual state when opening
         menu.Opening += (_, _) =>
         {
             pauseItem.Text         = _overlay.IsPaused ? "Resume overlay" : "Pause overlay";
             fullscreenItem.Checked = _overlay.FullscreenHideEnabled;
             spriteItem.Checked     = _overlay.SpriteVisible;
+
+            // Sync color checkmarks to saved setting
+            var saved = _settings.AccentColor;
+            int i = 0;
+            foreach (ToolStripMenuItem ci in colorMenu.DropDownItems)
+            {
+                var (_, c) = AccentTheme.Presets[i++];
+                ci.Checked = c.R == saved.R && c.G == saved.G && c.B == saved.B;
+            }
         };
 
 #if DEBUG
@@ -88,6 +115,7 @@ public sealed class TrayIcon : IDisposable
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(fullscreenItem);
         menu.Items.Add(spriteItem);
+        menu.Items.Add(colorMenu);
 #if DEBUG
         menu.Items.Add(testIconsItem);
 #endif

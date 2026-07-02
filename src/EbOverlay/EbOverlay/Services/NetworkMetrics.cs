@@ -1,7 +1,7 @@
 using System.Net.NetworkInformation;
 using Timer = System.Threading.Timer;
 
-namespace EbOverlay.Services;
+namespace Daemon.Services;
 
 /// <summary>
 /// Tracks NIC byte deltas every 2s and reports upload/download in KB/s.

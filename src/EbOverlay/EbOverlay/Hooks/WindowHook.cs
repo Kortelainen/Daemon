@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace EbOverlay.Hooks;
+namespace Daemon.Hooks;
 
 /// <summary>
 /// Wraps SetWinEventHook for window lifecycle events:

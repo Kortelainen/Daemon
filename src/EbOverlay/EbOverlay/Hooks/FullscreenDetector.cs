@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Windows;
 
-namespace EbOverlay.Hooks;
+namespace Daemon.Hooks;
 
 /// <summary>
 /// Detects whether the current foreground window is covering the entire screen

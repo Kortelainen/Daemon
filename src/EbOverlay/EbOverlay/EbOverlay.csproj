@@ -11,7 +11,7 @@
     <ApplicationIcon />
     <StartupObject />
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>EbOverlay</AssemblyName>
+    <AssemblyName>Daemon</AssemblyName>
     <Version>1.0.0</Version>
   </PropertyGroup>
 

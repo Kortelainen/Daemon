@@ -3,11 +3,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Threading;
-using EbOverlay.Hooks;
-using EbOverlay.Zones;
-using EbOverlay.Services;
+using Daemon.Hooks;
+using Daemon.Zones;
+using Daemon.Services;
 
-namespace EbOverlay;
+namespace Daemon;
 
 public partial class OverlayWindow : Window
 {

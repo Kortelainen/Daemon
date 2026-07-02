@@ -8,7 +8,7 @@ using Pen        = System.Windows.Media.Pen;
 using Point      = System.Windows.Point;
 using Size       = System.Windows.Size;
 
-namespace EbOverlay.Controls;
+namespace Daemon.Controls;
 
 /// <summary>
 /// Text rendered as geometry — drawn twice to produce a solid outline on all sides.

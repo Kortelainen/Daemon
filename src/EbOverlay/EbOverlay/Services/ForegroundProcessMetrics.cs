@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Timer = System.Threading.Timer;
 
-namespace EbOverlay.Services;
+namespace Daemon.Services;
 
 /// <summary>
 /// Samples CPU and RAM for the foreground process group — all processes sharing

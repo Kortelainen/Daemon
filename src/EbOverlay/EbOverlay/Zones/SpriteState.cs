@@ -1,4 +1,4 @@
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 public enum SpriteState
 {

@@ -1,4 +1,4 @@
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 /// <summary>
 /// Declarative rule tables for the sprite state machine.

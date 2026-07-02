@@ -1,4 +1,4 @@
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 /// <summary>
 /// Icons that can appear in the sprite status overlay layer.

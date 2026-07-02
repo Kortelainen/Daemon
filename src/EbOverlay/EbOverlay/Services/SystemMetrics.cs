@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Timer = System.Threading.Timer;
 
-namespace EbOverlay.Services;
+namespace Daemon.Services;
 
 public sealed class SystemMetrics : IDisposable
 {

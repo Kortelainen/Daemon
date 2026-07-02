@@ -1,4 +1,4 @@
-namespace EbOverlay.Services;
+namespace Daemon.Services;
 
 public record SystemSnapshot(
     float CpuPercent,

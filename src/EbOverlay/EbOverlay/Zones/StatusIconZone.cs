@@ -1,8 +1,8 @@
 using System.Windows.Threading;
-using EbOverlay.Controls;
-using EbOverlay.Services;
+using Daemon.Controls;
+using Daemon.Services;
 
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 /// <summary>
 /// Evaluates sensor snapshots against SpriteRules thresholds and updates

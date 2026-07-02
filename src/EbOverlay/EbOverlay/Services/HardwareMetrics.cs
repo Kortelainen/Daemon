@@ -3,7 +3,7 @@ using System.Text;
 using LibreHardwareMonitor.Hardware;
 using Timer = System.Threading.Timer;
 
-namespace EbOverlay.Services;
+namespace Daemon.Services;
 
 /// <summary>
 /// Polls CPU temperature, GPU load/temperature, and VRAM via LibreHardwareMonitor.
@@ -95,7 +95,7 @@ public sealed class HardwareMetrics : IDisposable
                     lines.AppendLine($"    {sensor.SensorType,-16} | {sensor.Name,-30} | {sensor.Value?.ToString("F2") ?? "null"}");
             }
         }
-        File.WriteAllText(@"C:\Kortelainen\EbOverlay\sensor_dump.txt", lines.ToString());
+        File.WriteAllText(@"C:\Kortelainen\Daemon\sensor_dump.txt", lines.ToString());
     }
 
     // Returns first sensor value whose name contains any of the hints, or null.

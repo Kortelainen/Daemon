@@ -1,7 +1,7 @@
 using System.Windows;
 using Application = System.Windows.Application;
 
-namespace EbOverlay;
+namespace Daemon;
 
 public partial class App : Application
 {

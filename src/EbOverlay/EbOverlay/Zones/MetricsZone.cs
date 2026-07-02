@@ -1,11 +1,11 @@
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
-using EbOverlay.Controls;
-using EbOverlay.Services;
+using Daemon.Controls;
+using Daemon.Services;
 using Color = System.Windows.Media.Color;
 
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 public class MetricsZone : IDisposable
 {

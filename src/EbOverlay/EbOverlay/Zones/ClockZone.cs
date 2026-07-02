@@ -1,7 +1,7 @@
 using System.Windows.Threading;
-using EbOverlay.Controls;
+using Daemon.Controls;
 
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 /// <summary>
 /// Updates the clock text block every second.

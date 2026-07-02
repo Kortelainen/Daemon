@@ -2,7 +2,7 @@ using System.Drawing;
 using System.Windows;
 using System.Windows.Forms;
 
-namespace EbOverlay;
+namespace Daemon;
 
 /// <summary>
 /// System tray icon with right-click menu.
@@ -21,7 +21,7 @@ public sealed class TrayIcon : IDisposable
 
         _notify = new NotifyIcon
         {
-            Text    = "EbOverlay",
+            Text    = "Daemon",
             Icon    = CreateFallbackIcon(),
             Visible = true,
         };
@@ -34,7 +34,7 @@ public sealed class TrayIcon : IDisposable
     {
         var menu = new ContextMenuStrip();
 
-        var header = new ToolStripLabel("EbOverlay")
+        var header = new ToolStripLabel("Daemon")
         {
             Font      = new Font("Courier New", 9f, System.Drawing.FontStyle.Bold),
             ForeColor = Color.FromArgb(0x66, 0xFF, 0x99),
@@ -128,7 +128,7 @@ public sealed class TrayIcon : IDisposable
     private void TogglePause()
     {
         _overlay.Dispatcher.Invoke(() => _overlay.SetPaused(!_overlay.IsPaused));
-        _notify.Text = _overlay.IsPaused ? "EbOverlay — paused" : "EbOverlay";
+        _notify.Text = _overlay.IsPaused ? "Daemon — paused" : "Daemon";
     }
 
     private static Icon CreateFallbackIcon()

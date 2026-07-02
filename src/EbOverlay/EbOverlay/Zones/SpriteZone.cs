@@ -2,10 +2,10 @@ using System.Runtime.InteropServices;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using EbOverlay.Services;
+using Daemon.Services;
 using Image = System.Windows.Controls.Image;
 
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 // ── Animation config — one row per state, order matches spritesheet rows ──────
 

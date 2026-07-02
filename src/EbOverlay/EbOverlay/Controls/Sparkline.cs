@@ -5,7 +5,7 @@ using Pen   = System.Windows.Media.Pen;
 using Color = System.Windows.Media.Color;
 using Point = System.Windows.Point;
 
-namespace EbOverlay.Controls;
+namespace Daemon.Controls;
 
 /// <summary>
 /// Scrolling sparkline graph for unbounded metrics like network traffic.

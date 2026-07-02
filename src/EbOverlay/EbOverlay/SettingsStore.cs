@@ -3,13 +3,13 @@ using System.Text.Json;
 using System.Windows.Media;
 using Color = System.Windows.Media.Color;
 
-namespace EbOverlay;
+namespace Daemon;
 
 public sealed class SettingsStore
 {
     private static readonly string Path = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "EbOverlay", "settings.json");
+        "Daemon", "settings.json");
 
     private sealed class Data
     {

@@ -1,4 +1,4 @@
-namespace EbOverlay.Services;
+namespace Daemon.Services;
 
 /// <summary>
 /// Fixed-size circular buffer for sparkline history.

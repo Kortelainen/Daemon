@@ -4,7 +4,7 @@ using Brush = System.Windows.Media.Brush;
 using Color = System.Windows.Media.Color;
 using Pen   = System.Windows.Media.Pen;
 
-namespace EbOverlay.Controls;
+namespace Daemon.Controls;
 
 /// <summary>
 /// Two-tone horizontal bar. LeftRatio fills from the left in accent color,

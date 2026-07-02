@@ -1,4 +1,4 @@
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 /// <summary>
 /// Immutable snapshot of every value that sprite rules need to evaluate.

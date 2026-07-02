@@ -3,9 +3,9 @@ using System.Text;
 using System.Windows;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
-using EbOverlay.Controls;
+using Daemon.Controls;
 
-namespace EbOverlay.Zones;
+namespace Daemon.Zones;
 
 /// <summary>
 /// Displays the foreground window's title in the top-left zone.

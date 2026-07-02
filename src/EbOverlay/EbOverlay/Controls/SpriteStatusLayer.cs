@@ -1,11 +1,11 @@
 using System.Windows;
 using System.Windows.Media;
-using EbOverlay.Zones;
+using Daemon.Zones;
 using Color = System.Windows.Media.Color;
 using Pen   = System.Windows.Media.Pen;
 using Point = System.Windows.Point;
 
-namespace EbOverlay.Controls;
+namespace Daemon.Controls;
 
 /// <summary>
 /// Transparent overlay drawn on top of the sprite Image.
